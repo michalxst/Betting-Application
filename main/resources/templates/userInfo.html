@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <title>User Information</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+
+        .user-info {
+            max-width: 60vw;
+            margin: 20px auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        #logout-btn, #add-credits-btn, #bet-history-btn, #user-info-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 10px;
+            border-radius: 5px;
+            font-size: 16px;
+            transition-duration: 0.4s;
+            cursor: pointer;
+        }
+
+        #logout-btn{
+            background-color: #f60a0a;
+            color: white;
+            padding: 10px;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 10px;
+            border-radius: 5px;
+            font-size: 16px;
+            transition-duration: 0.4s;
+            cursor: pointer;
+        }
+
+        #user-credits {
+            background-color: rgba(78, 86, 80, 0.98);
+            padding: 10px;
+            border-radius: 5px;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            color: white;
+        }
+        .custom-text-color {
+            color: white !important;
+        }
+
+
+        .user-info {
+            margin-top: 60px;
+        }
+
+
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand custom-text-color btn btn-link" href="/">BetsApp</a>
+    <div class="collapse navbar-collapse" id="navbarNav">
+
+
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <span id="user-credits" th:text="${userInfo.credits}"></span>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/addCredits" id="add-credits-btn">Add Points</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/userInfo" id="user-info-btn">My account</a>
+            </li>
+            <li class="nav-item">
+                <a href="/betHistory" class="nav-link" id="bet-history-btn">Bet History</a>
+            </li>
+            <li class="nav-item">
+                <a href="/logout" class="nav-link" id="logout-btn">Logout</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<div class="user-info">
+    <h1>My account information</h1>
+    <table>
+        <tr>
+            <td>User ID</td>
+            <td th:text="${userInfo.userID}"></td>
+        </tr>
+        <tr>
+            <td>Email</td>
+            <td th:text="${userInfo.email}"></td>
+        </tr>
+        <tr>
+            <td>Name</td>
+            <td th:text="${userInfo.userFirstName} + ' ' + ${userInfo.userSurname}"></td>
+        </tr>
+        <tr>
+            <td>Government ID</td>
+            <td th:text="${userInfo.userGovId}"></td>
+        </tr>
+        <tr>
+            <td>Points</td>
+            <td th:text="${userInfo.credits}"></td>
+        </tr>
+        <tr>
+            <td>Place of residence</td>
+            <td th:text="${userInfo.userPlaceOfResidence}"></td>
+        </tr>
+        <tr>
+            <td>Place of residence- postcode</td>
+            <td th:text="${userInfo.userPoRPostcode}"></td>
+        </tr>
+        <tr>
+            <td>Country of residence</td>
+            <td th:text="${userInfo.userCountryOfResidence}"></td>
+        </tr>
+    </table>
+</div>
+
+</body>
+</html>

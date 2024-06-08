@@ -1,0 +1,39 @@
+ <!DOCTYPE html>
+  <html xmlns:th="http://www.thymeleaf.org" lang="en">
+  <head>
+    <title>Account Verified</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+      body {
+        padding-top: 20px;
+      }
+      .content {
+        text-align: center;
+      }
+      h1 {
+        color: #000000;
+      }
+      p {
+        font-size: 18px;
+        margin-bottom: 15px;
+      }
+      a {
+        color: #007bff;
+        text-decoration: underline;
+        font-size: 16px;
+        transition-duration: 0.4s;
+        cursor: pointer;
+      }
+
+    </style>
+  </head>
+  <body>
+  <div class="container">
+    <div class="content">
+      <h1 class="mt-5">Verify your email</h1>
+      <p>Thank you for registering. Check your email for verification.</p>
+      <p><a th:href="@{/login}">Go to the login page</a></p>
+    </div>
+  </div>
+  </body>
+  </html>

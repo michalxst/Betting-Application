@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Bet History</title>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+        th, td {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+            margin: 0;
+        }
+        .load-more-btn {
+            display: none;
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        #logout-btn, #add-credits-btn, #bet-history-btn, #user-info-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 10px;
+            border-radius: 5px;
+            font-size: 16px;
+            transition-duration: 0.4s;
+            cursor: pointer;
+        }
+
+        #logout-btn {
+            background-color: #f60a0a;
+            color: white;
+            padding: 10px;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 10px;
+            border-radius: 5px;
+            font-size: 16px;
+            transition-duration: 0.4s;
+            cursor: pointer;
+        }
+
+        .custom-text-color {
+            color: white !important;
+        }
+
+        #user-credits {
+            background-color: rgba(78, 86, 80, 0.98);
+            padding: 10px;
+            border-radius: 5px;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            color: white;
+        }
+
+        table {
+            width: 100%;
+            margin: 0;
+            border-collapse: collapse;
+        }
+
+        .container {
+            padding: 1vw;
+            margin: 1vw;
+        }
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            background: #fff;
+            border: 1px solid #ddd;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+        .close-btn {
+            cursor: pointer;
+        }
+
+
+        .load-more-btn {
+            display: none;
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+    <script>
+        let availableCredits = parseFloat([[${userInfo.credits}]]);
+
+        $(document).ready(function () {
+            $('.delete-bet-btn').each(function () {
+                let deleteButton = $(this);
+                checkAndHideButton(deleteButton);
+            });
+
+            setInterval(function () {
+                $('.delete-bet-btn').each(function () {
+                    let deleteButton = $(this);
+                    checkAndHideButton(deleteButton);
+                });
+            }, 1000);
+            
+            $('.delete-bet-btn').click(function () {
+                let betId = $(this).data('bet-id');
+                let userId = $(this).attr('data-user-id');
+                let tableRow = $(this).closest('tr');
+                let betValue = parseFloat(tableRow.find('td:eq(6)').text());
+
+                $.ajax({
+                    url: '/delete/' + userId + '/' + betId,
+                    type: 'DELETE',
+                    success: function (response) {
+                        showPopup('Bet Deleted', response);
+                        tableRow.remove();
+                        updateCredits(betValue);
+                    },
+                    error: function (error) {
+                        alert('Failed to delete bet');
+                    }
+                });
+            });
+
+
+            function updateCredits(addedCredits) {
+                availableCredits += addedCredits;
+                document.getElementById('user-credits').innerText = availableCredits.toFixed(2);
+            }
+
+            function checkAndHideButton(deleteButton) {
+                let betDateTimeString = deleteButton.closest('tr').find('td:eq(8)').text();
+                let betDateTime = new Date(betDateTimeString.replace(/-/g, '/')); 
+                let oneMinuteAgo = new Date();
+                oneMinuteAgo.setMinutes(oneMinuteAgo.getMinutes() - 1);
+
+                if (betDateTime < oneMinuteAgo) {
+                    deleteButton.hide();
+                }
+            }
+
+
+            function toggleRows(tableId) {
+                $(`#${tableId} tbody tr:gt(4)`).toggle();
+            }
+
+
+            toggleRows('activeBetsTable');
+            toggleRows('wonBetsTable');
+            toggleRows('lostBetsTable');
+
+  
+            function showMoreButton(tableId) {
+                const rowCount = $(`#${tableId} tbody tr`).length;
+                if (rowCount > 5) {
+                    $(`#${tableId} + .load-more-btn`).show();
+                }
+            }
+
+            $('.load-more-btn').click(function () {
+                const tableId = $(this).prev().attr('id');
+                toggleRows(tableId);
+
+                const buttonText = $(this).text();
+                if (buttonText === 'Show More') {
+                    $(this).text('Show Less');
+                } else {
+                    $(this).text('Show More');
+                }
+            });
+
+            showMoreButton('activeBetsTable');
+            showMoreButton('wonBetsTable');
+            showMoreButton('lostBetsTable');
+        });
+    </script>
+    <script>
+    function showPopup(title, message) {
+        closePopup();
+        document.getElementById('popupContent').innerHTML = '<h2>' + title + '</h2><p>' + message + '</p>';
+        document.getElementById('popup').style.display = 'block';
+
+        }
+
+    function closePopup() {
+        document.getElementById('popup').style.display = 'none';
+    }
+
+    </script>
+</head>
+
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand custom-text-color btn btn-link" href="/">BetsApp</a>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <span id="user-credits" th:text="${userInfo.credits}"></span>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/addCredits" id="add-credits-btn">Add Points</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/userInfo" id="user-info-btn">My account</a>
+            </li>
+            <li class="nav-item">
+                <a href="/betHistory" class="nav-link" id="bet-history-btn">Bet History</a>
+            </li>
+            <li class="nav-item">
+                <a href="/logout" class="nav-link" id="logout-btn">Logout</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+<div id="popup" class="popup">
+    <span class="close-btn" onclick="closePopup()" title="Close">&times;</span>
+    <div id="popupContent"></div>
+</div>
+<div class="container">
+    <h1 class="mt-5">Bet History</h1>
+    <h1 class="mt-5"> </h1>
+    <h2 class="mt-4">Active Bets</h2>
+    <table id="activeBetsTable" th:if="${not #lists.isEmpty(activeBets)}">
+        <thead>
+        <tr>
+            <th>Bet ID</th>
+            <th>Game ID</th>
+            <th>Game Time</th>
+            <th>Home Team</th>
+            <th>Away Team</th>
+            <th>Expected Result</th>
+            <th>Bet Value</th>
+            <th>Bet Rate</th>
+            <th>Bet Date Time</th>
+            <th>Bet Won</th>
+            <th>Bet Status</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="bet : ${activeBets}">
+            <td th:text="${#strings.isEmpty(bet.betId) ? '' : bet.betId}"></td>
+            <td th:text="${bet.gameId}"></td>
+            <td th:text="${bet.gameTime}"></td>
+            <td th:text="${bet.gameHomeTeam}"></td>
+            <td th:text="${bet.gameAwayTeam}"></td>
+            <td th:text="${bet.betExpectedResult}"></td>
+            <td th:text="${bet.betValue}"></td>
+            <td th:text="${bet.betRate}"></td>
+            <td th:text="${bet.betDateTime}"></td>
+            <td th:text="${bet.betWon}"></td>
+            <td th:text="${bet.betStatus}"></td>
+            <td>
+                <button class="delete-bet-btn" th:data-bet-id="${bet.betId}" th:data-user-id="${userInfo.userID}">Delete Bet</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <span th:if="${#lists.isEmpty(activeBets)}">Nothing to see</span>
+    <button class="load-more-btn">Show More</button>
+
+    <h2 class="mt-4">Won Bets</h2>
+    <table id="wonBetsTable" th:if="${not #lists.isEmpty(wonBets)}">
+        <thead>
+        <tr>
+            <th>Bet ID</th>
+            <th>Game ID</th>
+            <th>Game Time</th>
+            <th>Home Team</th>
+            <th>Away Team</th>
+            <th>Expected Result</th>
+            <th>Bet Value</th>
+            <th>Bet Rate</th>
+            <th>Bet Date Time</th>
+            
+            <th>Bet Won</th>
+            <th>Bet Status</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="bet : ${wonBets}">
+            <td th:text="${bet.betId}"></td>
+            <td th:text="${bet.gameId}"></td>
+            <td th:text="${bet.gameTime}"></td>
+            <td th:text="${bet.gameHomeTeam}"></td>
+            <td th:text="${bet.gameAwayTeam}"></td>
+            <td th:text="${bet.betExpectedResult}"></td>
+            <td th:text="${bet.betValue}"></td>
+            <td th:text="${bet.betRate}"></td>
+            <td th:text="${bet.betDateTime}"></td>
+            
+            <td th:text="${bet.betWon}"></td>
+            <td th:text="${bet.betStatus}"></td>
+        </tr>
+        </tbody>
+    </table>
+    <span th:if="${#lists.isEmpty(wonBets)}">Nothing to see</span>
+    <button class="load-more-btn">Show More</button>
+
+    <h2 class="mt-4">Lost Bets</h2>
+    <table id="lostBetsTable" th:if="${not #lists.isEmpty(lostBets)}">
+        <thead>
+        <tr>
+            <th>Bet ID</th>
+            <th>Game ID</th>
+            <th>Game Time</th>
+            <th>Home Team</th>
+            <th>Away Team</th>
+            <th>Expected Result</th>
+            <th>Bet Value</th>
+            <th>Bet Rate</th>
+            <th>Bet Date Time</th>
+            
+            <th>Bet Won</th>
+            <th>Bet Status</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="bet : ${lostBets}">
+            <td th:text="${bet.betId}"></td>
+            <td th:text="${bet.gameId}"></td>
+            <td th:text="${bet.gameTime}"></td>
+            <td th:text="${bet.gameHomeTeam}"></td>
+            <td th:text="${bet.gameAwayTeam}"></td>
+            <td th:text="${bet.betExpectedResult}"></td>
+            <td th:text="${bet.betValue}"></td>
+            <td th:text="${bet.betRate}"></td>
+            <td th:text="${bet.betDateTime}"></td>
+            
+            <td th:text="${bet.betWon}"></td>
+            <td th:text="${bet.betStatus}"></td>
+        </tr>
+        </tbody>
+    </table>
+    <span th:if="${#lists.isEmpty(lostBets)}">Nothing to see</span>
+    <button class="load-more-btn">Show More</button>
+</div>
+</body>
+</html>

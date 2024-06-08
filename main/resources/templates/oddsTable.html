@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+<head>
+    <title>Combined User Information and Upcoming Games</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+
+        #logout-btn, #add-credits-btn, #bet-history-btn, #user-info-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 10px;
+            border-radius: 5px;
+            font-size: 16px;
+            transition-duration: 0.4s;
+            cursor: pointer;
+        }
+
+        #logout-btn {
+            background-color: #f60a0a;
+            color: white;
+            padding: 10px;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 10px;
+            border-radius: 5px;
+            font-size: 16px;
+            transition-duration: 0.4s;
+            cursor: pointer;
+        }
+
+          .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            background: #fff;
+            border: 1px solid #ddd;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+          .close-btn {
+              cursor: pointer;
+          }
+
+
+        .your-bet {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        #user-credits {
+            background-color: rgba(78, 86, 80, 0.98);
+            padding: 10px;
+            border-radius: 5px;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            color: white;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 50%;
+            margin: 20px auto;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .custom-text-color {
+            color: white !important;
+        }
+
+        #floating-buttons {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            width: 480px;
+            background-color: #fff;
+            padding: 1vw;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand custom-text-color btn btn-link" href="/">BetsApp</a>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <span id="user-credits" th:text="${userInfo.credits}"></span>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/addCredits" id="add-credits-btn">Add Points</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/userInfo" id="user-info-btn">My Account</a>
+            </li>
+            <li class="nav-item">
+                <a href="/betHistory" class="nav-link" id="bet-history-btn">Bet History</a>
+            </li>
+            <li class="nav-item">
+                <a href="/logout" class="nav-link" id="logout-btn">Logout</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container mt-5 d-flex flex-column align-items-center justify-content-center text-center">
+    <div class="upcoming-games">
+        <h1 class="mb-4">Upcoming Games</h1>
+
+        <div th:each="game : ${upcomingGames}" class="mb-4">
+            <h2 th:text="${game.sport_title}"></h2>
+            <p th:text="'Commence Time: ' + ${(game.commence_time)}"></p>
+            <p th:text="'Home Team: ' + ${game.home_team} + ' | Away Team: ' + ${game.away_team}"></p>
+
+            <div th:if="${#lists.isEmpty(game.bookmakers)}">
+                <p>Nothing to show, check later.</p>
+            </div>
+
+            <div th:each="bookmaker : ${game.bookmakers}" th:if="${not #lists.isEmpty(bookmaker.markets)}">
+                <div th:each="market : ${bookmaker.markets}" th:if="${not #lists.isEmpty(market.outcomes)}">
+                    <div class="d-flex flex-wrap mx-auto">
+                        <ul th:each="outcome : ${market.outcomes}">
+                            <li style="list-style-type: none;">
+                                <button th:data-game-id="${game.id}"
+                                        th:data-commence-time="${game.commence_time}"
+                                        th:data-home-team="${game.home_team}"
+                                        th:data-away-team="${game.away_team}"
+                                        th:data-outcome-name="${outcome.name}"
+                                        th:data-outcome-price="${outcome.price}"
+                                        class="btn btn-outline-primary mr-2 mb-2"
+                                        style="width: 150px;"
+                                        onclick="showGameData(this)">
+                                    <span th:text="${outcome.name + ' ' + outcome.price}"></span>
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="floating-buttons">
+
+        <div class="your-bet mt-4">
+            <label> YOUR BET </label>
+        </div>
+
+        <div class="credits-buttons mt-4 d-flex justify-content-center">
+            <button onclick="setBetAmount(5)" class="btn btn-outline-secondary mr-2" style="width: 120px;">5 Points</button>
+            <button onclick="setBetAmount(20)" class="btn btn-outline-secondary mr-2" style="width: 120px;">20 Points</button>
+            <button onclick="setBetAmount(50)" class="btn btn-outline-secondary mr-2" style="width: 120px;">50 Points</button>
+            <button onclick="setBetAmount(100)" class="btn btn-outline-secondary mr-2" style="width: 120px;">100 Points</button>
+            <button onclick="setBetAmount(250)" class="btn btn-outline-secondary mr-2" style="width: 120px;">250 Points</button>
+        </div>
+
+
+        <div class="input-outcome mt-4">
+            <label for="customCredits">Bet amount:</label>
+            <input type="text" id="customCredits" placeholder="Value between 0.01-10000" class="form-control mr-2">
+            <label for="possibleOutcome">Possible winnings:</label>
+            <span id="possibleOutcome" class="mr-2">0.00</span>
+        </div>
+
+        <div class="submit-button mt-4">
+            <button onclick="submitAndReset()"  class="btn btn-primary">Submit Bet</button>
+        </div>
+    </div>
+</div>
+
+<div id="popup" class="popup">
+    <span class="close-btn" onclick="closePopup()">&times;</span>
+    <div id="popupContent"></div>
+</div>
+
+
+    <div id="overlay" class="overlay"></div>
+
+    <script>
+        window.onscroll = function () {
+            floatButtons();
+        };
+
+        function floatButtons() {
+            let floatingButtons = document.getElementById("floating-buttons");
+            let distanceFromTop = document.documentElement.scrollTop || document.body.scrollTop;
+
+            if (distanceFromTop > 100) {
+                floatingButtons.style.top = "auto";
+            } else {
+                floatingButtons.style.top = "auto";
+            }
+        }
+
+
+        let availableCredits = parseFloat([[${userInfo.credits}]]);
+        let selectedOutcome = {};
+
+        function setBetAmount(amount) {
+            if (amount > availableCredits) {
+                showPopup("Insufficient Credits", "You cannot bet more credits than you have. Using available credits.");
+                amount = availableCredits;
+            }
+
+            document.getElementById('customCredits').value = amount;
+            updatePossibleOutcome();
+        }
+
+        function updatePossibleOutcome() {
+            let betAmount = parseFloat(document.getElementById('customCredits').value) || 0;
+            let possibleOutcome = calculatePossibleOutcome(betAmount);
+            document.getElementById('possibleOutcome').innerText = possibleOutcome.toFixed(2);
+        }
+
+        function showGameData(button) {
+            let gameId = button.getAttribute('data-game-id');
+            let commenceTime = button.getAttribute('data-commence-time');
+            let homeTeam = button.getAttribute('data-home-team');
+            let awayTeam = button.getAttribute('data-away-team');
+            let outcomeName = button.getAttribute('data-outcome-name');
+            let outcomePrice = button.getAttribute('data-outcome-price');
+
+            selectedOutcome = {
+                gameId: gameId,
+                gameTime: commenceTime,
+                gameHomeTeam: homeTeam,
+                gameAwayTeam: awayTeam,
+                betExpectedResult: outcomeName,
+                betRate: parseFloat(outcomePrice),
+            };
+            updatePossibleOutcome();
+
+            let buttons = document.querySelectorAll('.upcoming-games button');
+            buttons.forEach(function (btn) {
+                btn.style.backgroundColor = '';
+            });
+
+            button.style.backgroundColor = '#2196F3';
+        }
+
+        function calculatePossibleOutcome(betAmount) {
+            return selectedOutcome.betRate * betAmount;
+        }
+
+        window.onload = function () {
+            document.getElementById('customCredits').addEventListener('input', updatePossibleOutcome);
+        };
+
+        function submitBet() {
+            let betAmount = parseFloat(document.getElementById('customCredits').value) || 0;
+
+            if (betAmount <= 0) {
+                showPopup("Invalid Bet Amount", "Please enter a valid bet amount.");
+                return;
+            }
+
+            let betData = {
+                ...selectedOutcome,
+                betValue: betAmount,
+                betDateTime: new Date(),
+                betStatus: "active",
+            };
+            if (betAmount <= availableCredits) {
+                $.ajax({
+                    type: "POST",
+                    contentType: "application/json",
+                    url: "/api/betdata/save",
+                    data: JSON.stringify(betData),
+                    success: function (response) {
+                        showPopup("Success", "Bet data saved successfully.", function () {
+                            updateCredits(betAmount);
+                        });
+                    },
+                    error: function (error) {
+                        showPopup("Error", "Error saving bet data");
+                    }
+                });
+            } else {
+                showPopup("Error", "Bet amount can't be higher than your funds");
+            }
+
+
+        }
+        function submitAndReset() {
+            submitBet();
+            setBetAmount(0);
+        }
+
+        function updateCredits(addedCredits) {
+            availableCredits -= addedCredits;
+            document.getElementById('user-credits').innerText = availableCredits.toFixed(2);
+        }
+
+        function showPopup(title, message, callback) {
+            closePopup();
+            document.getElementById('popupContent').innerHTML = '<h2>' + title + '</h2><p>' + message + '</p>';
+            document.getElementById('popup').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+            if (callback && typeof callback === 'function') {
+                callback();
+            }
+        }
+
+        function closePopup() {
+            document.getElementById('popup').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            let customCreditsInput = document.getElementById('customCredits');
+            let maxBet = 10000;
+            let minBet = 0.01;
+
+            customCreditsInput.addEventListener('input', function () {
+                this.value = this.value.replace(/[^0-9.]/g, '');
+
+                let dotCount = (this.value.match(/\./g) || []).length;
+                if (dotCount > 1) {
+                    this.value = this.value.slice(0, -1);
+                }
+
+                let numericValue = parseFloat(this.value);
+                if (!isNaN(numericValue)) {
+                    if (numericValue > maxBet) {
+                        this.value = maxBet.toFixed(2);
+                    }
+                    else if (numericValue < minBet) {
+                        this.value = minBet.toFixed(2);
+                    }
+                }
+            });
+        });
+        function updateCreditsInterval() {
+            $.ajax({
+                url: '/user-info',
+                type: 'GET',
+                success: function (data) {
+                    availableCredits = parseFloat(data.credits);
+                    $('#user-credits').text(availableCredits);
+                },
+                error: function (error) {
+                    console.error('Error fetching user info:', error);
+                },
+            });
+        }
+        setInterval(updateCreditsInterval, 60000);
+
+    </script>
+</body>
+</html>

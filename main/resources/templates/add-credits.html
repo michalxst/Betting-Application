@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <title>User Information</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        #logout-btn, #add-credits-btn, #bet-history-btn, #user-info-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 10px;
+            border-radius: 5px;
+            font-size: 16px;
+            transition-duration: 0.4s;
+            cursor: pointer;
+        }
+
+        #logout-btn {
+            background-color: #f60a0a;
+            color: white;
+            padding: 10px;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 10px;
+            border-radius: 5px;
+            font-size: 16px;
+            transition-duration: 0.4s;
+            cursor: pointer;
+        }
+
+        #user-credits {
+            background-color: rgba(78, 86, 80, 0.98);
+            padding: 10px;
+            border-radius: 5px;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            color: white;
+        }
+        .custom-text-color {
+            color: white !important;
+        }
+
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            background: #fff;
+            border: 1px solid #ddd;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+        .close-btn {
+            cursor: pointer;
+        }
+
+        .middle-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 70vh;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand custom-text-color btn btn-link" href="/">BetsApp</a>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <span id="user-credits" th:text="${userInfo.credits}"></span>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/addCredits" id="add-credits-btn">Add Points</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/userInfo" id="user-info-btn">My account</a>
+            </li>
+            <li class="nav-item">
+                <a href="/betHistory" class="nav-link" id="bet-history-btn">Bet History</a>
+            </li>
+            <li class="nav-item">
+                <a href="/logout" class="nav-link" id="logout-btn">Logout</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+<div class="middle-content">
+    <div class="text-center">
+        <h1 class="mb-4">Add Points</h1>
+        <form action="/addCredits" method="post" class="form-group mx-auto" style="max-width: 300px;" onsubmit="return validateCodeAndSubmit(event)">
+            <label for="code">Enter Code:</label>
+            <input type="text" id="code" name="code" class="form-control mb-3">
+            <button type="submit" id="submitBtn" class="btn btn-primary" disabled>Submit</button>
+        </form>
+    </div>
+    <div>
+        <p th:if="${timeWhenActive != null}" id="countdown-timer"></p>
+    </div>
+</div>
+<div id="popup" class="popup">
+    <span class="close-btn" onclick="closePopup()" title="Close">&times;</span>
+    <div id="popupContent"></div>
+</div>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    let countdownDateStr = /*[[${#dates.format(timeWhenActive, 'yyyy-MM-dd HH:mm:ss')}]]*/ null;
+    let countdownDate = countdownDateStr ? new Date(countdownDateStr) : null;
+
+    if (countdownDate) {
+        let x = setInterval(function() {
+            let now = new Date().getTime();
+            let distance = countdownDate - now;
+            if (distance <= 0) {
+                clearInterval(x);
+                document.getElementById("submitBtn").disabled = false;
+                document.getElementById("countdown-timer").innerHTML = "Redeem your points now!";
+            } else {
+                let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                document.getElementById("countdown-timer").innerHTML = "Code will be active in: " + hours + "h " + minutes + "m " + seconds + "s ";
+            }
+        }, 1000);
+    }
+    /*]]>*/
+</script>
+
+<script>
+    function validateCodeAndSubmit(event) {
+        event.preventDefault();
+
+        let codeInput = document.getElementById('code').value.trim();
+        let userCredits = parseFloat(document.getElementById('user-credits').innerText);
+
+        if (codeInput === 'FREE') {
+            if (userCredits !== 0) {
+                showPopup("Error", "Promo code can only be used when there are no points left in your account.");
+                return false;
+            }
+
+            event.target.submit();
+            return true;
+        }
+
+        showPopup("Invalid Code", "This code does not work")
+        return false;
+    }
+
+
+    function showPopup(title, message) {
+        closePopup();
+        document.getElementById('popupContent').innerHTML = '<h2>' + title + '</h2><p>' + message + '</p>';
+        document.getElementById('popup').style.display = 'block';
+    }
+
+    function closePopup() {
+        document.getElementById('popup').style.display = 'none';
+    }
+</script>
+</body>
+</html>
